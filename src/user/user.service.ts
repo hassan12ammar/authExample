@@ -8,7 +8,7 @@ import { UserInfo } from '../auth/dto/auth.dto';
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) { }
 
-  async editProfile(user: User, dto: EditUserDto) {
+  async editProfile(userId: number, dto: EditUserDto) {
       // formate birthdate
       if (dto.birthdate) {
         dto.birthdate = new Date(dto.birthdate)
@@ -16,7 +16,7 @@ export class UserService {
 
       const updatedUser = await this.databaseService.user.update({
         where: {
-          id: user.id
+          id: userId
         },
         data: {
           ...dto

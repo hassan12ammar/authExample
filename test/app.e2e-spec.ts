@@ -259,6 +259,18 @@ describe("User", () => {
         .withBearerToken("$S{user_accessToken}")
         .expectBodyContains(dto.firstname)
         .expectBodyContains(dto.lastname)
+        .stores("userId", "id")
     })
   })
+
+  describe("Test User Id Decorator", () => {
+    it("should return user id", () => {
+      return pactum.spec()
+        .get("/user/testUserId")
+        .expectStatus(200)
+        .withBearerToken("$S{user_accessToken}")
+        .expectBodyContains("$S{userId}")
+    })
+  })
+
 })

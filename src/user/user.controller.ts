@@ -5,10 +5,16 @@ import { User } from '@prisma/client';
 import { JwtAccesGuard } from '../auth/guards/jwt.guard';
 import { getUser } from '../auth/decorators/getUser.decorator';
 import { EditUserDto } from './dto/editUser.dto';
+import { UserInfo } from 'src/auth/dto/auth.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {
+  constructor(private readonly userService: UserService) { }
+
+  @UseGuards(JwtAccesGuard)
+  @Get("testUserId")
+  async testUserId(@getUser("id") userID: number) {
+    return { userID }
   }
 
   @UseGuards(JwtAccesGuard)
@@ -19,8 +25,8 @@ export class UserController {
 
   @UseGuards(JwtAccesGuard)
   @Patch("editProfile")
-  editProfile(@getUser() user: User, @Body() newUser: EditUserDto) {
-    return this.userService.editProfile(user, newUser)
+  async editProfile(@getUser("id") userId: number, @Body() newUser: EditUserDto): Promise<UserInfo> {
+    return await this.userService.editProfile(userId, newUser)
   }
 
 }
