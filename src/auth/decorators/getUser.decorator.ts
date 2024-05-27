@@ -7,10 +7,13 @@ export const getUser = createParamDecorator((data: string | undefined,
     const resuest: Request = context
         .switchToHttp()
         .getRequest()
-    
+
     const user = resuest.user as User
-    if (data){
+    
+    if (data) {
         return user[data]
     }
-    return resuest.user
+
+    delete user.password
+    return user
 })

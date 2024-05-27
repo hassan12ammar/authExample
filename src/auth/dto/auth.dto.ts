@@ -38,6 +38,16 @@ export class UserInfo{
     birthdate: Date
 }
 
+export class UserOut{
+    id: number
+    username: string
+    firstname: string
+    lastname: string
+    birthdate: Date
+    refreshToken?: string
+}
+
+
 export interface UserOutDto{
     userInfo: UserInfo
     accessToken: string

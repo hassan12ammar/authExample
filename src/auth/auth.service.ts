@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { SignInDto, SignUpDto, UserInfo, UserInfoSign, UserOutDto } from './dto/auth.dto';
+import { SignInDto, SignUpDto, UserInfo, UserInfoSign, UserOut, UserOutDto } from './dto/auth.dto';
 import { DatabaseService } from '../database/database.service';
 
 
@@ -34,7 +34,7 @@ export class AuthService {
     const newUser = await this.databaseService.user.create({
       data: dto
     })
-    // get user info ro sign
+    // get user info to sign
     const userInfo = {
       id: newUser.id,
       username: newUser.username
@@ -42,6 +42,9 @@ export class AuthService {
 
     // generate tokens
     const { accessToken, refreshToken } = await this.signTokens(userInfo);
+
+    // update refresh token
+    this.updateRefreshToken(userInfo.id, refreshToken)
 
     // generate the output
     return this.buildUserOut(newUser, accessToken, refreshToken);
@@ -68,27 +71,65 @@ export class AuthService {
     // generate tokens
     const { accessToken, refreshToken } = await this.signTokens(userInfo);
 
+    // update refresh token
+    this.updateRefreshToken(userInfo.id, refreshToken)
+
     // generate the output
     return this.buildUserOut(user, accessToken, refreshToken);
   }
 
-  async refresh(user: User): Promise<UserOutDto> {
-    // get user info ro sign
+  async logout(dto: UserOut): Promise<string> {
+    await this.databaseService.user.updateMany({
+      where: {
+        id: dto.id,
+        refreshToken: {
+          not: null
+        },
+      },
+      data: {
+        refreshToken: null
+      }
+    })
+
+    return "Log out correctly"
+  }
+
+  async refresh(dto: UserOut): Promise<UserOutDto> {
+    // get user info to sign
     const userInfo = {
-      id: user.id,
-      username: user.username
+      id: dto.id,
+      username: dto.username
     }
 
     // generate tokens
     const { accessToken, refreshToken } = await this.signTokens(userInfo);
 
+    // update refresh token
+    this.updateRefreshToken(userInfo.id, refreshToken)
+
     // generate the output
-    return this.buildUserOut(user, accessToken, refreshToken);
+    return this.buildUserOut(userInfo, accessToken, refreshToken);
   }
 
-  private buildUserOut(user: User, accessToken: string, refreshToken: string) {
-    // exclude the password
-    delete user.password
+  async updateRefreshToken(userId: number, refreshToken: string) {
+    refreshToken = await argon.hash(refreshToken)
+
+    await this.databaseService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken: refreshToken
+      }
+    })
+  }
+
+  private buildUserOut(user: User | UserInfoSign, accessToken: string, refreshToken: string) {
+    // exclude the password and hashed refreshToken
+    if ("password" in user) {
+      delete user.password
+      delete user.refreshToken
+    }
 
     return {
       userInfo: user as UserInfo,

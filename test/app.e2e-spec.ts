@@ -202,7 +202,6 @@ describe("App e2e", () => {
           .expectStatus(200)
           .stores("user_accessToken", "accessToken")
           .stores("user_refreshToken", "refreshToken")
-
       })
 
       it("UnAuthorized if no access token", () => {
@@ -211,6 +210,44 @@ describe("App e2e", () => {
           .expectStatus(401)
 
       })
+    })
+
+    describe("LogOut", ()=>{
+      it("Logout successfully", ()=>{
+        return pactum.spec()
+        .get("/auth/logout")
+        .withBearerToken("$S{user_accessToken}")
+        .expectStatus(200)
+      })
+
+      it("UnAuthorized after logout", () => {
+        return pactum.spec()
+          .get("/auth/refresh")
+          .withBearerToken("$S{refresh_accessToken}")
+          .expectStatus(401)
+      })
+
+      const dto: SignInDto = {
+        username: "hassan",
+        password: "123",
+      }
+
+      it("Should SignIn", () => {
+        return pactum.spec()
+          .get("/auth/signIn")
+          .withBody(dto)
+          .expectStatus(200)
+          .stores("user_accessToken", "accessToken")
+          .stores("user_refreshToken", "refreshToken")
+      })
+
+      it("Should Refresh after sign in", () => {
+        return pactum.spec()
+          .get("/auth/refresh")
+          .withBearerToken("$S{refresh_accessToken}")
+          .expectStatus(401)
+      })
+
     })
   })
 
@@ -223,7 +260,6 @@ describe("User", () => {
         .get("/user/profile")
         .expectStatus(200)
         .withBearerToken("$S{user_accessToken}")
-
     })
 
     it("UnAuthorized if wrong token", () => {
