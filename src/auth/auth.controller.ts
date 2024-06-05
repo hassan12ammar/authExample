@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { SignInDto, SignUpDto, UserInfo, UserOut, UserOutDto } from './dto/auth.dto';
 import { JwtAccesGuard, JwtRefreshTokenGuard } from './guards/jwt.guard';
 import { getUser } from './decorators/getUser.decorator';
-import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
