@@ -7,13 +7,8 @@ import { UserInfo, UserOut } from '../auth/dto/auth.dto';
 @Injectable()
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) { }
-  getProfile(user: UserOut) {
-    // exclude the hashed refreshToken
-    delete user.refreshToken
-    return user
-  }
 
-  async editProfile(userId: number, dto: EditUserDto) {
+  async editProfile(userId: number, dto: EditUserDto): Promise<UserInfo> {
       // formate birthdate
       if (dto.birthdate) {
         dto.birthdate = new Date(dto.birthdate)
@@ -28,15 +23,7 @@ export class UserService {
         }
       })
 
-      const userOut: UserInfo = {
-        id: updatedUser.id,
-        username: updatedUser.username,
-        firstname: updatedUser.firstname,
-        lastname: updatedUser.lastname,
-        birthdate: updatedUser.birthdate
-      }
-
-      return userOut
+      return new UserInfo(updatedUser)
 
   }
 }

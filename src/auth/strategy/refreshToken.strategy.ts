@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import { PassportStrategy } from "@nestjs/passport"
 import { ExtractJwt, Strategy } from "passport-jwt"
@@ -10,30 +10,28 @@ import { Request } from "express"
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, "refresh-token") {
     constructor(configService: ConfigService, private readonly databaseService: DatabaseService) {
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                JwtRefreshTokenStrategy.extractJWTFromCookie
+            ]),
             ignoreExpiration: false,
             secretOrKey: configService.get<string>("REFRESH_SECRET"),
-            passReqToCallback: true
         })
     }
 
-    async validate(req: Request, payload: UserInfoSign) {
-        const refreshToken = req
-            ?.get('authorization')
-            ?.replace('Bearer', '')
-            .trim();
-
-        if (!refreshToken) {
-            throw new NotFoundException('Refresh token malformed');
+    private static extractJWTFromCookie(request: Request): string | null {
+        if (request.cookies && request.cookies.refreshToken) {
+            return request.cookies.refreshToken;
         }
+        return null;
+    }
 
+    async validate(payload: UserInfoSign) {
         const user = await this.databaseService.user.findUnique({
             where: {
                 id: payload.id
             }
         })
 
-        delete user.password
         return user
     }
 }

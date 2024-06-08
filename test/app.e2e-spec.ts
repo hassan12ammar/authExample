@@ -1,12 +1,13 @@
 import { Test } from "@nestjs/testing"
 import { AppModule } from "../src/app.module"
-import { ValidationPipe } from "@nestjs/common"
-import { NestApplication } from "@nestjs/core"
+import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common"
+import { NestApplication, Reflector } from "@nestjs/core"
 import { DatabaseService } from "../src/database/database.service"
 import { ConfigService } from "@nestjs/config"
 
 import * as pactum from "pactum"
 import { SignInDto, SignUpDto } from "../src/auth/dto/auth.dto"
+import * as cookieParser from 'cookie-parser';
 import { EditUserDto } from "src/user/dto/editUser.dto"
 
 describe("App e2e", () => {
@@ -14,6 +15,14 @@ describe("App e2e", () => {
 
   const configService = new ConfigService()
   const PORT = configService.get<number>("PORT")
+
+  pactum.handler.addCaptureHandler('accessToken', (ctx) => {
+    return ctx.res.headers["set-cookie"][0];
+  });
+
+  pactum.handler.addCaptureHandler('refreshToken', (ctx) => {
+    return ctx.res.headers["set-cookie"][1];
+  });
 
   beforeAll(async () => {
     const moduleMain = await Test.createTestingModule({
@@ -26,11 +35,18 @@ describe("App e2e", () => {
       transform: true
     }))
 
+    app.useGlobalInterceptors(new ClassSerializerInterceptor(
+      app.get(Reflector)
+    ))
+
+    app.use(cookieParser())
+
     await app.init()
     await app.listen(PORT)
 
     const databaseService = app.get(DatabaseService)
     await databaseService.cleanDb()
+
 
     pactum.request.setBaseUrl(`http://localhost:${PORT}`)
   })
@@ -117,9 +133,6 @@ describe("App e2e", () => {
           .post("/auth/signUp")
           .withBody(dtoIn)
           .expectStatus(201)
-
-          .stores("user2_accessToken", "accessToken")
-          .stores("user2_refeshToken", "refeshToken")
       })
 
     })
@@ -164,8 +177,8 @@ describe("App e2e", () => {
           .get("/auth/signIn")
           .withBody(dto)
           .expectStatus(200)
-          .stores("user_accessToken", "accessToken")
-          .stores("user_refreshToken", "refreshToken")
+          .stores("user_accessToken", "#accessToken")
+          .stores("user_refreshToken", "#refreshToken")
       })
 
       it("Not Found if wrong password", () => {
@@ -187,22 +200,18 @@ describe("App e2e", () => {
           .get("/auth/signIn")
           .withBody(dtoIn)
           .expectStatus(404)
-
       })
     })
 
     describe("Refresh", () => {
-
-      it("should refresh", () => {
+      it("should refresh", async () => {
         return pactum.spec()
           .get("/auth/refresh")
-          .withHeaders({
-            "Authorization": "Bearer $S{user_refreshToken}"
-          })
+          .withCookies("$S{user_refreshToken}")
           .expectStatus(200)
-          .stores("user_accessToken", "accessToken")
-          .stores("user_refreshToken", "refreshToken")
-      })
+          .stores("user_accessToken", "#accessToken")
+          .stores("user_refreshToken", "#refreshToken")
+        })
 
       it("UnAuthorized if no access token", () => {
         return pactum.spec()
@@ -212,18 +221,18 @@ describe("App e2e", () => {
       })
     })
 
-    describe("LogOut", ()=>{
-      it("Logout successfully", ()=>{
+    describe("LogOut", () => {
+      it("Logout successfully", () => {
         return pactum.spec()
-        .get("/auth/logout")
-        .withBearerToken("$S{user_accessToken}")
-        .expectStatus(200)
+          .get("/auth/logout")
+          .withCookies('$S{user_accessToken}')
+          .expectStatus(200)
       })
 
       it("UnAuthorized after logout", () => {
         return pactum.spec()
           .get("/auth/refresh")
-          .withBearerToken("$S{refresh_accessToken}")
+          .withCookies("$S{user_accessToken}")
           .expectStatus(401)
       })
 
@@ -237,15 +246,15 @@ describe("App e2e", () => {
           .get("/auth/signIn")
           .withBody(dto)
           .expectStatus(200)
-          .stores("user_accessToken", "accessToken")
-          .stores("user_refreshToken", "refreshToken")
+          .stores("user_accessToken", "#accessToken")
+          .stores("user_refreshToken", "#refreshToken")
       })
 
       it("Should Refresh after sign in", () => {
         return pactum.spec()
           .get("/auth/refresh")
-          .withBearerToken("$S{refresh_accessToken}")
-          .expectStatus(401)
+          .withCookies("$S{user_refreshToken}")
+          .expectStatus(200)
       })
 
     })
@@ -259,14 +268,14 @@ describe("User", () => {
       return pactum.spec()
         .get("/user/profile")
         .expectStatus(200)
-        .withBearerToken("$S{user_accessToken}")
+        .withCookies("$S{user_accessToken}")
     })
 
     it("UnAuthorized if wrong token", () => {
       return pactum.spec()
         .get("/user/profile")
         .expectStatus(401)
-        .withBearerToken("$S{user_refreshToken}")
+        .withCookies("$S{user_refreshToken}")
 
     })
   })
@@ -283,8 +292,7 @@ describe("User", () => {
         .patch("/user/editProfile")
         .withBody(dto)
         .expectStatus(200)
-        .withBearerToken("$S{user_accessToken}")
-
+        .withCookies("$S{user_accessToken}")
     })
 
     it("should Edit Profile", () => {
@@ -292,7 +300,7 @@ describe("User", () => {
         .patch("/user/editProfile")
         .withBody(dto)
         .expectStatus(200)
-        .withBearerToken("$S{user_accessToken}")
+        .withCookies("$S{user_accessToken}")
         .expectBodyContains(dto.firstname)
         .expectBodyContains(dto.lastname)
         .stores("userId", "id")
@@ -304,9 +312,8 @@ describe("User", () => {
       return pactum.spec()
         .get("/user/testUserId")
         .expectStatus(200)
-        .withBearerToken("$S{user_accessToken}")
+        .withCookies("$S{user_accessToken}")
         .expectBodyContains("$S{userId}")
     })
   })
-
-})
+}) 

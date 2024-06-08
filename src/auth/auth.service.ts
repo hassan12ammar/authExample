@@ -47,7 +47,7 @@ export class AuthService {
     this.updateRefreshToken(userInfo.id, refreshToken)
 
     // generate the output
-    return this.buildUserOut(newUser, accessToken, refreshToken);
+    return this.buildUserOut(newUser, accessToken, refreshToken)
   }
 
   async signIn(dto: SignInDto): Promise<UserOutDto> {
@@ -75,10 +75,10 @@ export class AuthService {
     this.updateRefreshToken(userInfo.id, refreshToken)
 
     // generate the output
-    return this.buildUserOut(user, accessToken, refreshToken);
+    return this.buildUserOut(user, accessToken, refreshToken)
   }
 
-  async logout(dto: UserOut): Promise<string> {
+  async logout(dto: UserOut): Promise<void> {
     await this.databaseService.user.updateMany({
       where: {
         id: dto.id,
@@ -90,8 +90,6 @@ export class AuthService {
         refreshToken: null
       }
     })
-
-    return "Log out correctly"
   }
 
   async refresh(dto: UserOut): Promise<UserOutDto> {
@@ -108,7 +106,7 @@ export class AuthService {
     this.updateRefreshToken(userInfo.id, refreshToken)
 
     // generate the output
-    return this.buildUserOut(userInfo, accessToken, refreshToken);
+    return this.buildUserOut(userInfo, accessToken, refreshToken)
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
@@ -122,20 +120,15 @@ export class AuthService {
         refreshToken: refreshToken
       }
     })
+
   }
 
   private buildUserOut(user: User | UserInfoSign, accessToken: string, refreshToken: string) {
-    // exclude the password and hashed refreshToken
-    if ("password" in user) {
-      delete user.password
-      delete user.refreshToken
-    }
-
-    return {
-      userInfo: user as UserInfo,
+    return new UserOutDto({
+      userInfo: new UserInfo(user),
       accessToken: accessToken,
       refreshToken: refreshToken,
-    };
+    })
   }
 
   private async signTokens(userInfo: UserInfoSign) {
