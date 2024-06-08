@@ -1,73 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# authExample
+A demonstration project for implementing an authentication flow using NestJS. The project utilizes **JWT tokens** for authentication, with both **Access** and **Refresh** tokens stored in **cookies**. It includes basic setup for user authentication and protected endpoints. 
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The project has two branches:
+- **Cookies-based**: Implements JWT tokens for authentication with **HTTPOnly cookies**.
+- **Bearer-auth**: Implements JWT tokens for authentication using **Bearer tokens**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# Features
+- Authentication flow using JWT tokens
+- Access and refresh tokens
+- Two modes of token storage: HTTPOnly cookies and Bearer tokens
+- Protected endpoints for authenticated users
 
-## Description
+# Dependencies
+All project dependencies are listed in the `package.json` file. Make sure you have `pnpm` installed to manage the packages.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
+# Installation
+To install the dependencies:
 ```bash
-$ pnpm install
+pnpm install
 ```
 
-## Running the app
+# Configuration
+Before running the server, ensure you have a `.env` file in the root directory with the following variables: `PORT`, `ACCESS_SECRET`, `ACCESS_EXP`, `REFRESH_SECRET`, `REFRESH_EXP`, `DATABASE_URL`. Example of the file:
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```env
+PORT=3000
+ACCESS_SECRET=your_access_secret
+ACCESS_EXP=3600
+REFRESH_SECRET=your_refresh_secret
+REFRESH_EXP=86400
+DATABASE_URL=your_database_url
 ```
 
-## Test
+# Usage
+To start the API server, use one of the following commands:
 
+## Development
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm start
 ```
 
-## Support
+## Watch Mode
+```bash
+pnpm start:dev
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Production Mode
+```bash
+pnpm start:prod
+```
 
-## Stay in touch
+## End-to-End Testing
+```bash
+pnpm test:e2e
+```
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Endpoints
+## Authentication Endpoints
+### 1. Sign Up
+- Endpoint: POST /auth/signUp
+- Description: Registers a new user and sets the access and refresh tokens in cookies.
+- Request Body: SignUpDto
 
-## License
+### 2. Sign In
+- Endpoint: GET /auth/signIn
+- Description: Authenticates a user and sets the access and refresh tokens in cookies.
+- Request Body: SignInDto
 
-Nest is [MIT licensed](LICENSE).
+### 3. Logout
+- Endpoint: GET /auth/logout
+- Description: Logs out a user and clears the access and refresh tokens from cookies.
+- Guards: JwtAccesGuard
+
+### 4. Refresh Token
+- Endpoint: GET /auth/refresh
+- Description: Refreshes the access token using the refresh token.
+- Guards: JwtRefreshTokenGuard
+
+## User Endpoints
+### 1. Test User ID
+- Endpoint: GET /user/testUserId
+- Description: Returns the user ID.
+- Guards: JwtAccesGuard
+
+### 2. Get Profile
+- Endpoint: GET /user/profile
+- Description: Returns the user's profile information.
+- Guards: JwtAccesGuard
+
+### 3. Edit Profile
+- Endpoint: PATCH /user/editProfile
+- Description: Edits the user's profile information.
+- Request Body: EditUserDto
+- Guards: JwtAccesGuard
+
+# License
+This project is licensed under the MIT License.
