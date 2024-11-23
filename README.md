@@ -26,9 +26,9 @@ Before running the server, ensure you have a `.env` file in the root directory w
 ```env
 PORT=3000
 ACCESS_SECRET=your_access_secret
-ACCESS_EXP=3600
+ACCESS_EXP=7d
 REFRESH_SECRET=your_refresh_secret
-REFRESH_EXP=86400
+REFRESH_EXP=1m
 DATABASE_URL=your_database_url
 ```
 
